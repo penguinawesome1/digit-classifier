@@ -12,3 +12,6 @@ def main():
   
   output = inputs[0]*weights[0] + inputs[1]*weights[1] + inputs[2]*weights[2] + bias
   print(output)
+
+if __name__ == "__main__":
+    main()
