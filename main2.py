@@ -7,8 +7,6 @@ Owen Colley
 
 import numpy
 
-# parameters for the network
-
 i_nodes = 2
 o_nodes = 2
 h_nodes = 3
