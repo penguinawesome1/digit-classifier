@@ -6,6 +6,7 @@ Owen Colley
 '''
 
 import numpy
+import matplotlib.pyplot as plt
 
 i_nodes = 2
 o_nodes = 2
@@ -38,7 +39,7 @@ for i in range(1000):
   grad_b2 = grad_pred.sum(axis=0, keepdims=True)
   grad_h_relu = grad_pred.dot(w2.T)
   grad_h_values = grad_h_relu.copy()
-  grad_h_calues[h_values < 0] = 0
+  grad_h_values[h_values < 0] = 0
   grad_w1 = i_data.T.dot(grad_h_values)
   grad_b1 = grad_h_values.sum(axis=0, keepdims=True)
   
