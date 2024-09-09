@@ -29,3 +29,14 @@ h_relu = numpy.maximum(h_values, 0)
 o_data_predictions = h_relu.dot(w2)
 
 loss = numpy.square(o_data_predictions - o_data).sum()
+
+grad_pred = 2 * (o_data_predictions - o_data)
+
+grad_w2 = h_relu.T.dot(grad_pred)
+
+grad_h_relu = grad_pred.dot(w2.T)
+
+grad_h_values = grad_h_relu.copy()
+grad_h_calues[h_values < 0] = 0
+
+grad_w1 = i_data.T.dot(grad_h_values)
