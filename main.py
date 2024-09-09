@@ -6,7 +6,6 @@ Owen Colley
 '''
 
 import numpy
-import matplotlib.pyplot as plt
 
 i_nodes = 2
 o_nodes = 2
@@ -47,10 +46,6 @@ for i in range(1000):
   b1 -= grad_b1 * 1e-4
   w2 -= grad_w2 * 1e-4
   b2 -= grad_b2 * 1e-4
-
-plt.plot(indices, loss_array)
-plt.legend(["Loss over iterations"])
-plt.show()
 
 print(o_data)
 print(o_data_predictions)
