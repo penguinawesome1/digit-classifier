@@ -65,7 +65,7 @@ activation2.forward(dense2.out)
 
 print(activation2.output[:5])
 
-loss_function = Locc_CategoricalCrossentropy()
-lostt = loss_function.calculate(activation2.output, y)
+loss_function = Loss_CategoricalCrossentropy()
+lost = loss_function.calculate(activation2.output, y)
 
 print("Loss: ", loss)
