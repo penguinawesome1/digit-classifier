@@ -7,19 +7,36 @@ Owen Colley
 REMEMBER TO TRY TO MAKE BITMASK NEURAL NETWORK
 '''
 
+import pandas
 import numpy
+
+df = pandas.read_csv('5year_stock.txt', header=0)
+
+df.fillna(method='ffill', inplace=True)
+
+df['Date'] = pandas.to_datetime(df['Date'], format='%m/%d/%Y')
+df['Date'] = (df['Date'] - df['Date'].min()).dt.days
+
+numerical_cols = ['Close/Last', 'Open', 'High', 'Low']
+df[numerical_cols] = (df[numerical_cols] - df[numerical_cols].min()) / (df[numerical_cols].max() - df[numerical_cols].min())
+
+X = df.drop('Close/Last', axis=1)  # Input features (Date, Open, High, Low)
+y = df['Close/Last']  # Target variable (Close/Last)
+
+X = numpy.array(X)
+y = numpy.array(y)
 
 # define the size of the neural network
 input_nodes = 2
 hidden_nodes = 3
-output_nodes = 2
+output_nodes = 1
 batch_size = 8
 batches = 1000
 num_hidden_layers = 2
 
 # defines input data and output data for testing and training model
-input_data = numpy.random.randn(batch_size, input_nodes)
-output_data = numpy.random.randn(batch_size, output_nodes)
+input_data = X
+output_data = y
 
 # set weight arrays to random numbers (setting to 0 could cause a dead system)
 weights = [numpy.random.randn(input_nodes, hidden_nodes)]
