@@ -21,52 +21,62 @@ num_hidden_layers = 2
 input_data = numpy.random.randn(batch_size, input_nodes)
 output_data = numpy.random.randn(batch_size, output_nodes)
 
-# set weight arrays to random number (setting to 0 could cause a dead system)
-weights1 = numpy.random.randn(input_nodes, hidden_nodes)
-weights2 = numpy.random.randn(h_nodes, output_nodes)
+# set weight arrays to random numbers (setting to 0 could cause a dead system)
+weights = [numpy.random.randn(input_nodes, hidden_nodes)]
+for _ in range(num_hidden_layers - 1):
+  weights.append(numpy.random.randn(hidden_nodes, hidden_nodes))
+weights.append(numpy.random.randn(hidden_nodes, output_nodes))
 
 # set bias arrays to 0
-biases1 = numpy.zeros((1, hidden_nodes))
-biases2 = numpy.zeros((1, output_nodes))
+biases = [numpy.zeros((1, hidden_nodes)) for _ in range(num_hidden_layers + 1)]
 
-# set empty loss array and indices to fill when training data
 loss_array = numpy.array([[]])
 indices = numpy.array([[]])
-
 # loop for training iterations
-for i in range(batches):
-
-  # loop to account for every forward pass of data, allowing my complex pattern recognition
-  for a in range(num_hidden_layers):
-    # define the hidden values using input * weight + bias (y = mx + b)
-    hidden_values = input_data.dot(weights1) + biases1
-  
-    # add non linearity to the line by seting everything below 0 to 0. Bias stops this from causing problems
-    hidden_relu_values = numpy.maximum(0, hidden_values)
-
-  # add loss found using (guess - actual)^2 which amplifies errors, adds it to array along with its index
-  loss = numpy.square(output_data_predictions - output_data).sum()
-  loss_array = numpy.append(loss_array, loss)
-  indices = numpy.append(indices, i)
-  
-  if i == 0:
-    gradient_weights.append(input_data.T.dot(gradient_hidden_values))
-    gradient_biases.append(gradient_hidden_values.sum(axis=0, keepdims=True))
-  else:
-    # uses derivative of loss to find the gradient prediction
-    gradient_prediction = 2 * (output_data_predictions - output_data)
-    gradient_weights.append(hidden_relu_values.T.dot(gradient_prediction))
-
-    # uses sum of gradient prediction to find bias
-    gradient_biases.append(gradient_prediction.sum(axis=0, keepdims=True))
-    gradient_hidden_relu = gradient_prediction.dot(weights.T)
+for epoch in range(batches):
+  # loop through hidden layers to add gradients
+  for i in range(batch_size):
+    # Extract data point from the batch
+    current_input_data = input_data[epoch * batch_size + i]
+    current_output_data = output_data[epoch * batch_size + i]
     
-    gradient_hidden_values = gradient_hidden_relu.copy()
-    gradient_hidden_values[h_values < 0] = 0 # relu
+    # forward pass through all layers
+    hidden_activations = [input_data]
+    for layer in range(num_hidden_layers + 1):
+      previous_activations = hidden_activations[-1]
+      current_weights = weights[layer]
+      hidden_values = previous_activations.dot(current_weights) + biases[layer]
+      hidden_activations.append(np.maximum(0, hidden_values))  # ReLU
   
-  # shifts weights and biases slightly closer to solution using slope to eventually find minimum
-  weights = numpy.subtract(weights, gradient_weights * 1e-4)
-  biases = numpy.subtract(biases, gradient_biases * 1e-4)
+    # output predictions after last hidden layer
+    output_data_predictions = hidden_activations[-1]
+    
+    gradients_weights = []
+    gradients_biases = []
+
+    output_error = output_data_predictions - current_output_data
+    gradients_weights.append(previous_activations.T.dot(output_error))
+    gradients_biases.append(output_error.sum(axis=0, keepdims=True))
+
+    # backpropagate through hidden layers
+    for layer in reversed(range(1, num_hidden_layers + 1)):
+      previous_activations = hidden_activations[layer - 1]
+
+      # ensures only activated neurons contribute to back propegation when finding error using relu
+      layer_error = output_error.dot(weights[layer].T) * np.where(hidden_activations[layer] > 0, 1, 0)
+      
+      # update weights and biases
+      gradients_weights.insert(0, previous_activations.T.dot(layer_error))
+      gradients_biases.insert(0, layer_error.sum(axis=0, keepdims=True))
+
+    # calculate loss using (guess - actual)^2 and add to array along with the index
+    loss_array = numpy.append(loss_array, numpy.square(output_data_predictions - output_data).sum())
+    indices = numpy.append(indices, i)
+    
+  # update weights and biases according to the slope found to be slightly closer to the minimum. 1e-4 is the learning rate
+  for layer in range(num_hidden_layers + 1):
+    weights[layer] -= gradient_weights[layer] * 1e-4
+    biases[layer] -= gradient_biases[layer] * 1e-4
 
 print("Output Data: ", output_data)
 print("Output Predictions: ", output_data_predictions)
