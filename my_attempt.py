@@ -10,7 +10,7 @@ REMEMBER TO TRY TO MAKE BITMASK NEURAL NETWORK
 import pandas
 import numpy
 
-df = pandas.read_csv('5year_stock.txt', header=0)
+'''df = pandas.read_csv('5year_stock.txt', header=0)
 
 df.fillna(method='ffill', inplace=True)
 
@@ -24,7 +24,10 @@ X = df.drop('Close/Last', axis=1)  # Input features (Date, Open, High, Low)
 y = df['Close/Last']  # Target variable (Close/Last)
 
 X = numpy.array(X)
-y = numpy.array(y)
+y = numpy.array(y)'''
+
+X = np.linspace(0, 10, 100)  # 100 points between 0 and 10
+y = np.sin(x)
 
 # define the size of the neural network
 input_nodes = 2
