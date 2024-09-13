@@ -15,6 +15,7 @@ hidden_nodes = 3
 output_nodes = 2
 batch_size = 8
 batches = 1000
+num_hidden_layers = 2
 
 # defines input data and output data for testing and training model
 input_data = numpy.random.randn(batch_size, input_nodes)
@@ -47,24 +48,25 @@ for i in range(batches):
   loss = numpy.square(output_data_predictions - output_data).sum()
   loss_array = numpy.append(loss_array, loss)
   indices = numpy.append(indices, i)
+  
+  if i == 0:
+    gradient_weights.append(input_data.T.dot(gradient_hidden_values))
+    gradient_biases.append(gradient_hidden_values.sum(axis=0, keepdims=True))
+  else:
+    # uses derivative of loss to find the gradient prediction
+    gradient_prediction = 2 * (output_data_predictions - output_data)
+    gradient_weights.append(hidden_relu_values.T.dot(gradient_prediction))
 
-  # uses derivative of loss to find the gradient predicion
-  gradient_pred = 2 * (output_data_predictions - output_data)
-
-  # tr
-  gradient_w2 = hidden_relu_values.T.dot(grad_pred)
-  gradient_b2 = grad_pred.sum(axis=0, keepdims=True)
-  grad_h_relu = grad_pred.dot(w2.T)
-  grad_h_values = grad_h_relu.copy()
-  grad_h_values[h_values < 0] = 0
-  grad_w1 = i_data.T.dot(grad_h_values)
-  grad_b1 = grad_h_values.sum(axis=0, keepdims=True)
-
+    # uses sum of gradient prediction to find bias
+    gradient_biases.append(gradient_prediction.sum(axis=0, keepdims=True))
+    gradient_hidden_relu = gradient_prediction.dot(weights.T)
+    
+    gradient_hidden_values = gradient_hidden_relu.copy()
+    gradient_hidden_values[h_values < 0] = 0 # relu
+  
   # shifts weights and biases slightly closer to solution using slope to eventually find minimum
-  weights -= grad_w1 * 1e-4
-  biases -= grad_b1 * 1e-4
-  w2 -= grad_w2 * 1e-4
-  b2 -= grad_b2 * 1e-4
+  weights = numpy.subtract(weights, gradient_weights * 1e-4)
+  biases = numpy.subtract(biases, gradient_biases * 1e-4)
 
 print("Output Data: ", output_data)
 print("Output Predictions: ", output_data_predictions)
