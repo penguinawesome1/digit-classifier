@@ -30,9 +30,9 @@ X = np.linspace(0, 10, 100)
 y = np.sin(X)
 
 # define the size of the neural network
-input_nodes = 1
-hidden_nodes = 3
-output_nodes = 1
+input_nodes = 100
+hidden_nodes = 100
+output_nodes = 100
 batch_size = 8
 batches = 1000
 num_hidden_layers = 2
