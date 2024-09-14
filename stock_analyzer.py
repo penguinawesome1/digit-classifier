@@ -4,29 +4,27 @@ from sklearn.preprocessing import MinMaxScaler
 
 def ReLU(input):
     return np.maximum(0, input)
-def softmax(input):
-    exp_input = np.exp(input)
-    return exp_input / np.sum(exp_input, axis=-1, keepdims=True)
+    
 def MSE(y_true, y_pred):
     return (y_true - y_pred) ** 2
-def tanh(x):
-    return np.tanh(x)
+    
+def linearize(input, weight, bias):
+    return numpy.dot(input, weight) + bias
+    
 def gradient_descent(learning_rate, weights, biases, gradients):
-    weights -= learning_rate * gradients["weights"]
-    biases -= learning_rate * gradients["biases"]
-def step_function(x):
-    return 1 if x >= 0 else 0
-def linear_function(input, weight, bias):
-    return input * weight + bias
+    for layer in range(len(weights)):
+        weights[layer] -= learning_rate * gradients[layer]
+    for layer in range(len(biases)):
+        biases[layer] -= learning_rate * gradients[layer + 1]
 
 # import data from past 5 years of nasdaq
 data_frame = pd.read_csv('5year_stock.csv')
-X_date = df['Date'].values[:-1]
+X_date = df['Date'].values[:-1] # excludes last point for current stock
 X_close = df['Close'].values[:-1]
 X_open = df['Open'].values[:-1]
 X_high = df['High'].values[:-1]
 X_low = df['Low'].values[:-1]
-y = df['Close'].values[1:]
+y = df['Close'].values[1:] # excludes first point for tomorrow stock
 
 # Normalize input data
 scaler = MinMaxScaler()
@@ -49,41 +47,38 @@ weights.append(np.random.randn(hidden_nodes, output_nodes))
 # set bias arrays to 0
 biases = [np.zeros((1, hidden_nodes)) for _ in range(num_hidden_layers + 1)]
 
-losses = np.array([[]])
-
 # Training loop
+num_correct = 0
 for epoch in range(batches):
     for i in range(batch_size):
-        # Forward pass
-        current_input = X[epoch * batch_size + i]
-        current_output = y[epoch * batch_size + i]
+        current_X = X[epoch * batch_size + i]
+        current_y = y[epoch * batch_size + i]
+        
+        # calculate output guess
+        y_pred = linearize(current_X, weights[-1], biases[-1])
+        y_pred = ReLU(y_pred)
+        hidden_value = [y_pred]
+        for a in range(num_hidden_layers):
+            hidden_value.append(y_pred)
+            y_pred = linearize(current_X, weights[-1], biases[-1])
+            y_pred = ReLU(y_pred)
 
-        # Calculate activations for hidden layers
-        for layer in range(num_hidden_layers):
-            z = np.dot(current_input, weights[layer]) + biases[layer]
-            current_input = tanh(z)
+        # add current loss to losses
+        loss = MSE(current_y, y_pred)
+        num_correct += int(np.argmax(y_pred) == np.argmax(y))
+        grad_pred = 2 * (y_pred - current_y)
 
-        # Calculate output
-        output = np.dot(current_input, weights[-1]) + biases[-1]
-
-        # Calculate error and gradients
-        error = MSE(current_output, y_pred)
-        # ... (backpropagation to calculate gradients)
-
+        grad_weights = []
+        grad_biases = []
+        for i in range(len(weights) - 1, 0, -1):
+            grad_hidden = np.dot(grad_pred, weights[i].T) * (hidden_values[i - 1] > 0)
+            grad_weights.append(np.dot(hidden_values[i - 1].T, grad_hidden))
+            grad_biases.append(np.sum(grad_hidden, axis=0, keepdims=True))
+        
         # Update weights and biases
         for layer in range(num_hidden_layers + 1):
             weights[layer] -= learning_rate * gradients[layer]
             biases[layer] -= learning_rate * gradients[layer + 1]
 
-# Generate predictions
-y_predictions = []
-for x in X:
-    # Forward pass
-    for layer in range(num_hidden_layers):
-        z = np.dot(x, weights[layer]) + biases[layer]
-        x = tanh(z)
-    output = np.dot(x, weights[-1]) + biases[-1]
-    y_predictions.append(output)
-
 print("Output Data: ", y)
-print("Output Predictions: ", y_predictions)
+print("Output Predictions: ", y_pred)
