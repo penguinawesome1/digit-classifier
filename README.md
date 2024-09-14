@@ -1,1 +1,1 @@
-An image classifier made in Python using a neural network.
+Attempting to learn to make a Python neural network
