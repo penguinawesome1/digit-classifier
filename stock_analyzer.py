@@ -27,8 +27,10 @@ num_hidden_layers = 2
 learning_rate = 1e-3
 
 # import data from past 5 years of nasdaq
-data_frame = pd.read_csv('5year_stock.csv')
-X_date = df['Date'].values[:-1] # excludes last point for current stock
+df = pd.read_csv('5year_stock.csv')
+X_year = df['Date'].dt.year.values[:-1] # excludes last point for current stock
+X_month = df['Date'].dt.month.values[:-1]
+X_day = df['Date'].dt.day.values[:-1]
 X_close = df['Close'].values[:-1]
 X_open = df['Open'].values[:-1]
 X_high = df['High'].values[:-1]
