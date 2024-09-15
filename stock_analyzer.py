@@ -47,7 +47,7 @@ y = df['Close'].values[1:] # excludes first point for tomorrow stock
 
 # Normalize input data
 scaler = MinMaxScaler()
-X = scaler.fit_transform(np.column_stack([X_year, X_month, X_day, X_close, X_open, X_high, X_low], axis=1))
+X = scaler.fit_transform(np.column_stack([X_year, X_month, X_day, X_close, X_open, X_high, X_low]))
 
 # set weight arrays to random numbers (setting to 0 could cause a dead system)
 weights = [np.random.randn(input_nodes, hidden_nodes)]
@@ -57,7 +57,7 @@ weights.append(np.random.randn(hidden_nodes, output_nodes))
 
 # set bias arrays to 0
 biases = [np.zeros((1, hidden_nodes)) for _ in range(num_hidden_layers + 1)]
-biases.append(np.zeros((1, output_nodes))
+biases.append(np.zeros((1, output_nodes)))
 
 # Training loop
 for epoch in range(batches):
@@ -67,25 +67,21 @@ for epoch in range(batches):
         current_y = y[start : start + batch_size]
         
         # calculate output guess
-        y_pred = X
+        y_pred = current_X
         hidden_values = []
         for layer in range(num_hidden_layers):
             y_pred = ReLU(linearize(y_pred, weights[layer], biases[layer]))
             hidden_values.append(y_pred)
         y_pred = ReLU(linearize(y_pred, weights[num_hidden_layers], biases[num_hidden_layers]))
-
-        # print loss and guess gradient
-        loss = MSE(y_pred, current_y)
-        print("Loss: ", loss)
-
+        
         # set gradient prediction to derivative of loss function
-        grad_pred = 2 * (y_pred - current_y)
+        grad_pred = 2 * (y_pred.T - current_y)
 
         # find gradient weights and biases
         grad_weights = []
         grad_biases = []
-        for a in range(len(weights) - 1, 0, -1):
-            grad_hidden = np.dot(grad_pred, weights[a]) * (hidden_values[a] > 0)
+        for a in reversed(range(1, num_hidden_layers + 2)):
+            grad_hidden = np.dot(grad_pred.T, weights[a]) * (hidden_values[a-1] > 0)
             grad_weights.append(np.dot(grad_hidden, hidden_values[a].T))
             grad_biases.append(np.sum(grad_hidden, axis=0, keepdims=True))
         
