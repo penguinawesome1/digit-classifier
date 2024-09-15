@@ -17,6 +17,15 @@ def gradient_descent(learning_rate, weights, biases, gradients):
     for layer in range(len(biases)):
         biases[layer] -= learning_rate * gradients[layer + 1]
 
+# define the size of the neural network
+input_nodes = 5
+hidden_nodes = 4
+output_nodes = 1
+batch_size = 32
+batches = 1000
+num_hidden_layers = 2
+learning_rate = 1e-3
+
 # import data from past 5 years of nasdaq
 data_frame = pd.read_csv('5year_stock.csv')
 X_date = df['Date'].values[:-1] # excludes last point for current stock
@@ -29,15 +38,6 @@ y = df['Close'].values[1:] # excludes first point for tomorrow stock
 # Normalize input data
 scaler = MinMaxScaler()
 X = scaler.fit_transform(np.stack([X_date, X_close, X_open, X_high, X_low], axis=1))
-
-# define the size of the neural network
-input_nodes = 5
-hidden_nodes = 4
-output_nodes = 1
-batch_size = 32
-batches = 1000
-num_hidden_layers = 2
-learning_rate = 1e-3
 
 # set weight arrays to random numbers (setting to 0 could cause a dead system)
 weights = [np.random.randn(input_nodes, hidden_nodes)]
@@ -56,13 +56,11 @@ for epoch in range(batches):
         current_y = y[epoch * batch_size + i]
         
         # calculate output guess
-        y_pred = linearize(current_X, weights[-1], biases[-1])
-        y_pred = ReLU(y_pred)
-        hidden_value = [y_pred]
-        for a in range(num_hidden_layers):
-            hidden_value.append(y_pred)
-            y_pred = linearize(current_X, weights[-1], biases[-1])
-            y_pred = ReLU(y_pred)
+        y_pred = ReLU(linearize(X, weights[0], biases[0]))
+        hidden_values = []
+        for layer in range(num_hidden_layers):
+            hidden_values.append(y_pred)
+            y_pred = ReLU(linearize(y_pred, weights[layer+1], biases[layer+1]))
 
         # add current loss to losses
         loss = MSE(current_y, y_pred)
