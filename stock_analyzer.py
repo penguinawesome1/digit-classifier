@@ -12,8 +12,8 @@ from sklearn.preprocessing import MinMaxScaler
 def ReLU(input):
     return np.maximum(0, input)
     
-def MSE(y_true, y_pred):
-    return (y_true - y_pred) ** 2
+def MSE(y_pred, y):
+    return (y - y_pred) ** 2
     
 def linearize(input, weight, bias):
     return np.dot(input, weight) + bias
@@ -22,7 +22,7 @@ def gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases):
     for layer in range(len(weights)):
         weights[layer] -= learning_rate * grad_weights[layer]
     for layer in range(len(biases)):
-        biases[layer] -= learning_rate * grad_biases[layer + 1]
+        biases[layer] -= learning_rate * grad_biases[layer]
 
 # define the size of the neural network
 input_nodes = 7
@@ -47,7 +47,7 @@ y = df['Close'].values[1:] # excludes first point for tomorrow stock
 
 # Normalize input data
 scaler = MinMaxScaler()
-X = scaler.fit_transform(np.stack([X_year, X_month, X_day, X_close, X_open, X_high, X_low], axis=1))
+X = scaler.fit_transform(np.column_stack([X_year, X_month, X_day, X_close, X_open, X_high, X_low], axis=1))
 
 # set weight arrays to random numbers (setting to 0 could cause a dead system)
 weights = [np.random.randn(input_nodes, hidden_nodes)]
@@ -61,35 +61,36 @@ biases.append(np.zeros((1, output_nodes))
 
 # Training loop
 for epoch in range(batches):
-    num_correct = 0
-    for i in range(batch_size):        
-        current_X = X[epoch * batch_size + i]
-        current_y = y[epoch * batch_size + i]
+    for i in range(batch_size):
+        start = i * batch_size
+        current_X = X[start : start + batch_size]
+        current_y = y[start : start + batch_size]
         
         # calculate output guess
-        y_pred = ReLU(linearize(X, weights[0], biases[0]))
+        y_pred = X
         hidden_values = []
         for layer in range(num_hidden_layers):
+            y_pred = ReLU(linearize(y_pred, weights[layer], biases[layer]))
             hidden_values.append(y_pred)
-            y_pred = ReLU(linearize(y_pred, weights[layer+1], biases[layer+1]))
+        y_pred = ReLU(linearize(y_pred, weights[num_hidden_layers], biases[num_hidden_layers]))
 
-        # add current loss to losses
-        loss = MSE(current_y, y_pred)
-        num_correct += int(np.argmax(y_pred) == np.argmax(y))
+        # print loss and guess gradient
+        loss = MSE(y_pred, current_y)
+        print("Loss: ", loss)
+
+        # set gradient prediction to derivative of loss function
         grad_pred = 2 * (y_pred - current_y)
 
         # find gradient weights and biases
         grad_weights = []
         grad_biases = []
-        for i in range(len(weights) - 1, 0, -1):
-            grad_hidden = np.dot(grad_pred, weights[i]) * (hidden_values[i - 1] > 0)
-            grad_weights.append(np.dot(hidden_values[i - 1].T, grad_hidden))
+        for a in range(len(weights) - 1, 0, -1):
+            grad_hidden = np.dot(grad_pred, weights[a]) * (hidden_values[a] > 0)
+            grad_weights.append(np.dot(grad_hidden, hidden_values[a].T))
             grad_biases.append(np.sum(grad_hidden, axis=0, keepdims=True))
         
         # Update weights and biases
         gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases)
-    
-    print("Accuracy: ", num_correct / batch_size)
 
 print("Output Data: ", y)
 print("Output Predictions: ", y_pred)
