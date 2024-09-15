@@ -36,9 +36,7 @@ learning_rate = 1e-3
 # import data from past 5 years of nasdaq
 df = pd.read_csv('5year_stock.csv')
 df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
-X_year = df['Date'].dt.year.values[:-1] # excludes last point for current stock
-X_month = df['Date'].dt.month.values[:-1]
-X_day = df['Date'].dt.day.values[:-1]
+X_month = df['Date'].dt.month.values[:-1] # excludes last point for current stock
 X_close = df['Close'].values[:-1]
 X_open = df['Open'].values[:-1]
 X_high = df['High'].values[:-1]
@@ -47,7 +45,8 @@ y = df['Close'].values[1:] # excludes first point for tomorrow stock
 
 # Normalize input data
 scaler = MinMaxScaler()
-X = scaler.fit_transform(np.column_stack([X_year, X_month, X_day, X_close, X_open, X_high, X_low]))
+# X = scaler.fit_transform(np.column_stack([X_month, X_close, X_open, X_high, X_low]))
+X = X_close
 
 # set weight arrays to random numbers (setting to 0 could cause a dead system)
 weights = [np.random.randn(input_nodes, hidden_nodes)]
@@ -56,7 +55,7 @@ for _ in range(num_hidden_layers - 1):
 weights.append(np.random.randn(hidden_nodes, output_nodes))
 
 # set bias arrays to 0
-biases = [np.zeros((1, hidden_nodes)) for _ in range(num_hidden_layers + 1)]
+biases = [np.zeros((1, hidden_nodes)) for _ in range(num_hidden_layers)]
 biases.append(np.zeros((1, output_nodes)))
 
 # Training loop
@@ -67,10 +66,13 @@ for epoch in range(batches):
         current_y = y[start : start + batch_size]
         
         # calculate output guess
-        y_pred = current_X
+        y_pred = current_X.reshape(-1, input_nodes)
+        pre_activations = []
         hidden_values = []
         for layer in range(num_hidden_layers):
-            y_pred = ReLU(linearize(y_pred, weights[layer], biases[layer]))
+            z = linearize(y_pred, weights[layer], biases[layer])
+            pre_activations.append(z)
+            y_pred = ReLU(z)
             hidden_values.append(y_pred)
         y_pred = ReLU(linearize(y_pred, weights[num_hidden_layers], biases[num_hidden_layers]))
         
@@ -80,13 +82,12 @@ for epoch in range(batches):
         # find gradient weights and biases
         grad_weights = []
         grad_biases = []
-        for a in reversed(range(1, num_hidden_layers + 2)):
-            grad_hidden = np.dot(grad_pred.T, weights[a]) * (hidden_values[a-1] > 0)
-            grad_weights.append(np.dot(grad_hidden, hidden_values[a].T))
-            grad_biases.append(np.sum(grad_hidden, axis=0, keepdims=True))
+        for layer in reversed(range(1, num_hidden_layers + 1)):
+            grad_weights[layer] = np.dot(pre_activations[layer-1].T, grad_pred)
+            grad_biases[layer] = np.sum(grad_pred, axis=0, keepdims=True)
         
-        # Update weights and biases
-        gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases)
+    # Update weights and biases
+    gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases)
 
 print("Output Data: ", y)
 print("Output Predictions: ", y_pred)
