@@ -82,9 +82,9 @@ for epoch in range(batches):
         # find gradient weights and biases
         grad_weights = []
         grad_biases = []
-        for layer in reversed(range(1, num_hidden_layers + 1)):
-            grad_weights[layer] = np.dot(pre_activations[layer-1].T, grad_pred)
-            grad_biases[layer] = np.sum(grad_pred, axis=0, keepdims=True)
+        for layer in range(num_hidden_layers):
+            grad_weights.append(np.dot(pre_activations[1-layer].T, grad_pred.T))
+            grad_biases.append(np.sum(grad_pred, axis=0, keepdims=True))
         
     # Update weights and biases
     gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases)
