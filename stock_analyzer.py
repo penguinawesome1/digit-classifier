@@ -9,25 +9,26 @@ def MSE(y_true, y_pred):
     return (y_true - y_pred) ** 2
     
 def linearize(input, weight, bias):
-    return numpy.dot(input, weight) + bias
+    return np.dot(input, weight) + bias
     
-def gradient_descent(learning_rate, weights, biases, gradients):
+def gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases):
     for layer in range(len(weights)):
-        weights[layer] -= learning_rate * gradients[layer]
+        weights[layer] -= learning_rate * grad_weights[layer]
     for layer in range(len(biases)):
-        biases[layer] -= learning_rate * gradients[layer + 1]
+        biases[layer] -= learning_rate * grad_biases[layer + 1]
 
 # define the size of the neural network
-input_nodes = 5
-hidden_nodes = 4
+input_nodes = 7
+hidden_nodes = 10
 output_nodes = 1
-batch_size = 32
-batches = 1000
-num_hidden_layers = 2
+batch_size = 64
+batches = 10
+num_hidden_layers = 3
 learning_rate = 1e-3
 
 # import data from past 5 years of nasdaq
 df = pd.read_csv('5year_stock.csv')
+df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
 X_year = df['Date'].dt.year.values[:-1] # excludes last point for current stock
 X_month = df['Date'].dt.month.values[:-1]
 X_day = df['Date'].dt.day.values[:-1]
@@ -39,7 +40,7 @@ y = df['Close'].values[1:] # excludes first point for tomorrow stock
 
 # Normalize input data
 scaler = MinMaxScaler()
-X = scaler.fit_transform(np.stack([X_date, X_close, X_open, X_high, X_low], axis=1))
+X = scaler.fit_transform(np.stack([X_year, X_month, X_day, X_close, X_open, X_high, X_low], axis=1))
 
 # set weight arrays to random numbers (setting to 0 could cause a dead system)
 weights = [np.random.randn(input_nodes, hidden_nodes)]
@@ -73,12 +74,12 @@ for epoch in range(batches):
         grad_weights = []
         grad_biases = []
         for i in range(len(weights) - 1, 0, -1):
-            grad_hidden = np.dot(grad_pred, weights[i].T) * (hidden_values[i - 1] > 0)
+            grad_hidden = np.dot(grad_pred, weights[i]) * (hidden_values[i - 1] > 0)
             grad_weights.append(np.dot(hidden_values[i - 1].T, grad_hidden))
             grad_biases.append(np.sum(grad_hidden, axis=0, keepdims=True))
         
         # Update weights and biases
-        gradient_descent(learning_rate, weights, biases, gradients)
+        gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases)
     
     print("Accuracy: ", num_correct / batch_size)
 
