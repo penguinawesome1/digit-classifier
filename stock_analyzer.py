@@ -25,8 +25,8 @@ def gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases):
         biases[layer] -= learning_rate * grad_biases[layer]
 
 # define the size of the neural network
-input_nodes = 1
-hidden_nodes = 3
+input_nodes = 5
+hidden_nodes = 8
 output_nodes = 1
 batch_size = 64
 batches = 10
@@ -45,8 +45,7 @@ y = df['Close'].values[1:] # excludes first point for tomorrow stock
 
 # Normalize input data
 scaler = MinMaxScaler()
-# X = scaler.fit_transform(np.column_stack([X_month, X_close, X_open, X_high, X_low]))
-X = X_close
+X = scaler.fit_transform(np.column_stack([X_month, X_close, X_open, X_high, X_low]))
 
 # set weight arrays to random numbers (setting to 0 could cause a dead system)
 weights = [np.random.randn(input_nodes, hidden_nodes)]
@@ -82,8 +81,8 @@ for epoch in range(batches):
         # find gradient weights and biases
         grad_weights = []
         grad_biases = []
-        for layer in range(num_hidden_layers):
-            grad_weights.append(np.dot(pre_activations[1-layer].T, grad_pred.T))
+        for layer in reversed(range(num_hidden_layers)):
+            grad_weights.append(np.dot(pre_activations[layer].T, grad_pred.T))
             grad_biases.append(np.sum(grad_pred, axis=0, keepdims=True))
         
     # Update weights and biases
