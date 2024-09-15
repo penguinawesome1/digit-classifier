@@ -25,8 +25,8 @@ def gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases):
         biases[layer] -= learning_rate * grad_biases[layer]
 
 # define the size of the neural network
-input_nodes = 7
-hidden_nodes = 10
+input_nodes = 1
+hidden_nodes = 3
 output_nodes = 1
 batch_size = 64
 batches = 10
