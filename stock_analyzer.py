@@ -1,3 +1,10 @@
+'''
+Purpose: Analyze stock data using a neural network
+
+Owen Colley
+9/14/24
+'''
+
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
@@ -50,6 +57,7 @@ weights.append(np.random.randn(hidden_nodes, output_nodes))
 
 # set bias arrays to 0
 biases = [np.zeros((1, hidden_nodes)) for _ in range(num_hidden_layers + 1)]
+biases.append(np.zeros((1, output_nodes))
 
 # Training loop
 for epoch in range(batches):
