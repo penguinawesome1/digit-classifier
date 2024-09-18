@@ -38,10 +38,13 @@ X_low = df['Low'].values[:-1]
 # normalize data
 scaler = MinMaxScaler()
 X = scaler.fit_transform(np.column_stack([X_month, X_close, X_high, X_low]))
+
+print("X ", X)
+
 y = df['Close'].values[1:] # excludes first point for tomorrow stock
 
 # define the size of the neural network
-input_nodes = X.shape[1]
+input_nodes = 4
 hidden_nodes = 8
 output_nodes = 1
 batch_size = 64
@@ -55,15 +58,15 @@ weights.append([np.random.randn(hidden_nodes, hidden_nodes) for _ in range(num_h
 weights.append(np.random.randn(hidden_nodes, output_nodes))
 
 # set bias arrays to 0
-biases = [np.zeros((1, hidden_nodes)) for _ in range(num_hidden_layers)]
-biases.append(np.zeros((1, output_nodes)))
+biases = [np.zeros(hidden_nodes) for _ in range(num_hidden_layers)]
+biases.append(np.zeros(output_nodes))
 
 # training loop
 for epoch in range(batches):
     for i in range(batch_size):
         start = (i * batch_size) + (epoch * input_nodes)
-        current_X = X[start : start + batch_size]
-        current_y = y[start : start + batch_size]
+        current_X = X[start : start + batch_size - 1]
+        current_y = y[start : start + batch_size - 1]
         
         # calculate output guess
         y_pred = current_X
@@ -87,7 +90,7 @@ for epoch in range(batches):
                 grad_pred *= np.where(hidden_values[layer] > 0, 1, 0)
 
             # update weight and bias gradient arrays
-            grad_weights.append(np.dot(pre_activations[layer].T, grad_pred.T))
+            grad_weights.append(np.dot(pre_activations[layer], grad_pred))
             grad_biases.append(np.sum(grad_pred, axis=0, keepdims=True))
 
             # update grad_pred for hidden layers, not input
