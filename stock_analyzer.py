@@ -38,67 +38,73 @@ X_low = df['Low'].values[:-1]
 # normalize data
 scaler = MinMaxScaler()
 X = scaler.fit_transform(np.column_stack([X_month, X_close, X_high, X_low]))
-
-print("X ", X)
-
 y = df['Close'].values[1:] # excludes first point for tomorrow stock
 
 # define the size of the neural network
 input_nodes = 4
-hidden_nodes = 8
+hidden_nodes = 5
 output_nodes = 1
-batch_size = 64
-batches = 10
-num_hidden_layers = 3
-learning_rate = 1e-3
+batch_size = 2
+batches = 1
+num_hidden_layers = 1
+learning_rate = 1e-4
 
 # set weight arrays to random numbers (setting to 0 could cause a dead system)
 weights = [np.random.randn(input_nodes, hidden_nodes)]
-weights.append([np.random.randn(hidden_nodes, hidden_nodes) for _ in range(num_hidden_layers - 1)])
+for _ in range(num_hidden_layers-1):
+    weights.append([np.random.randn(hidden_nodes, hidden_nodes)])
 weights.append(np.random.randn(hidden_nodes, output_nodes))
 
 # set bias arrays to 0
-biases = [np.zeros(hidden_nodes) for _ in range(num_hidden_layers)]
+biases = []
+for _ in range(num_hidden_layers):
+    biases.append([np.zeros(hidden_nodes)])
 biases.append(np.zeros(output_nodes))
 
 # training loop
 for epoch in range(batches):
-    for i in range(batch_size):
-        start = (i * batch_size) + (epoch * input_nodes)
-        current_X = X[start : start + batch_size - 1]
-        current_y = y[start : start + batch_size - 1]
-        
-        # calculate output guess
-        y_pred = current_X
-        pre_activations = []
-        hidden_values = []
-        for layer in range(len(weights)):
-            z = linearize(y_pred, weights[layer], biases[layer])
-            pre_activations.append(z)
-            y_pred = ReLU(z)
-            hidden_values.append(y_pred)
-        
-        # set gradient prediction to derivative of loss function
-        grad_pred = 2 * (y_pred.T - current_y)
+    start = epoch * batch_size
+    current_X = X[start : start + batch_size]
+    current_y = y[start : start + batch_size]
+    
+    # pass through hidden layers and output
+    y_pred = current_X
+    print(y_pred)
+    pre_activations = []
+    hidden_values = []
+    for layer in range(len(weights)):
+        z = linearize(y_pred, weights[layer], biases[layer])
+        pre_activations.append(z)
+        y_pred = ReLU(z)
+        hidden_values.append(y_pred)
+    
+    # set gradient prediction to derivative of loss function
+    grad_pred = 2 * (y_pred.T - current_y)
 
-        # find gradient weights and biases
-        grad_weights = []
-        grad_biases = []
-        for layer in reversed(range(len(weights))):
-            # do ReLU for hidden layers, not output
-            if layer < len(weights) - 1:
-                grad_pred *= np.where(hidden_values[layer] > 0, 1, 0)
+    # print(weights)
+    # print("NEXT")
+    # print(grad_pred)
+    # print("NEXT")
+    # print(pre_activations)
 
-            # update weight and bias gradient arrays
-            grad_weights.append(np.dot(pre_activations[layer], grad_pred))
-            grad_biases.append(np.sum(grad_pred, axis=0, keepdims=True))
-
-            # update grad_pred for hidden layers, not input
-            if layer > 0:
-                grad_pred = np.dot(grad_pred, weights[layer].T)
+    # # find gradient weights and biases
+    # grad_weights = []
+    # grad_biases = []
+    # for layer in reversed(range(len(weights))):
+    #     # do ReLU for hidden layers, not output
+    #     # if layer < len(weights) - 1:
+    #     #     grad_pred = ReLU(grad_pred)
         
-    # update weights and biases
-    gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases)
+    #     # update weight and bias gradient arrays
+    #     grad_weights.append(np.dot(pre_activations[layer], grad_pred))
+    #     grad_biases.append(np.sum(grad_pred, axis=0))
+
+    #     # update grad_pred for hidden layers, not input
+    #     # if layer != 0:
+    #     #     grad_pred = np.dot(grad_pred.T, weights[layer])
+        
+    # # update weights and biases
+    # gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases)
 
 print("Output Data: ", y)
 print("Output Predictions: ", y_pred)
