@@ -15,12 +15,6 @@ def ReLU(input):
 def MSE(y_pred, y):
     return (y - y_pred) ** 2
     
-def gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases):
-    for layer in range(len(weights)):
-        weights[layer] -= learning_rate * grad_weights[layer]
-    for layer in range(len(biases)):
-        biases[layer] -= learning_rate * grad_biases[layer]
-
 # import data from past 5 years of nasdaq
 df = pd.read_csv('5year_stock.csv')
 df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
@@ -35,13 +29,13 @@ X_low = df['Low'].values[:-1]
 # normalize data
 scaler = MinMaxScaler()
 X = scaler.fit_transform(np.column_stack([X_month, X_close, X_high, X_low]))
-y = df['Close'].values[1:] # excludes first point for tomorrow stock
+y = scaler.fit_transform(df['Close'].values[1:].reshape(-1, 1)) # excludes first point for tomorrow stock
 
 # define the size of the neural network
 input_nodes = 4
-hidden_nodes = 5
+hidden_nodes = 3
 output_nodes = 1
-batch_size = 2
+batch_size = 1
 batches = 1
 num_hidden_layers = 1
 learning_rate = 1e-4
@@ -73,36 +67,28 @@ for epoch in range(batches):
         pre_activations.append(z)
         y_pred = ReLU(z)
         hidden_values.append(y_pred)
-
-    print("y_pred", y_pred)
     
     # set gradient prediction to derivative of loss function
-    # grad_pred = 2 * (y_pred.T - current_y)
+    grad_pred = 2 * (y_pred - current_y)
 
-    # print(weights)
-    # print("NEXT")
-    # print(grad_pred)
-    # print("NEXT")
-    # print(pre_activations)
-
-    # # find gradient weights and biases
-    # grad_weights = []
-    # grad_biases = []
-    # for layer in reversed(range(len(weights))):
-    #     # do ReLU for hidden layers, not output
-    #     # if layer < len(weights) - 1:
-    #     #     grad_pred = ReLU(grad_pred)
+    # find gradient weights and biases
+    grad_weights = []
+    grad_biases = []
+    for layer in reversed(range(len(weights))):
+        # do ReLU for hidden layers, not output
+        if layer < len(weights) - 1:
+            grad_pred = ReLU(grad_pred)
         
-    #     # update weight and bias gradient arrays
-    #     grad_weights.append(np.dot(pre_activations[layer], grad_pred))
-    #     grad_biases.append(np.sum(grad_pred, axis=0))
+        # update weight and bias gradient arrays
+        grad_weights.append(np.dot(pre_activations[layer], grad_pred.T))
+        grad_biases.append(np.sum(grad_pred, axis=0, keepdims=True))
 
-    #     # update grad_pred for hidden layers, not input
-    #     # if layer != 0:
-    #     #     grad_pred = np.dot(grad_pred.T, weights[layer])
+        # update grad_pred for hidden layers, not input
+        if layer != 0:
+            grad_pred = np.dot(grad_pred.T, weights[layer].T)
         
-    # # update weights and biases
-    # gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases)
-
-print("Output Data: ", y)
-print("Output Predictions: ", y_pred)
+    # update weights and biases with gradient descent
+    for layer in range(len(weights)):
+        weights[layer] -= learning_rate * grad_weights[layer]
+    for layer in range(len(biases)):
+        biases[layer] -= learning_rate * grad_biases[layer]
