@@ -15,9 +15,6 @@ def ReLU(input):
 def MSE(y_pred, y):
     return (y - y_pred) ** 2
     
-def linearize(input, weight, bias):
-    return np.dot(input, weight) + bias
-    
 def gradient_descent(learning_rate, weights, biases, grad_weights, grad_biases):
     for layer in range(len(weights)):
         weights[layer] -= learning_rate * grad_weights[layer]
@@ -69,17 +66,18 @@ for epoch in range(batches):
     
     # pass through hidden layers and output
     y_pred = current_X
-    print(y_pred)
     pre_activations = []
     hidden_values = []
     for layer in range(len(weights)):
-        z = linearize(y_pred, weights[layer], biases[layer])
+        z = np.dot(y_pred, weights[layer]) + biases[layer]
         pre_activations.append(z)
         y_pred = ReLU(z)
         hidden_values.append(y_pred)
+
+    print("y_pred", y_pred)
     
     # set gradient prediction to derivative of loss function
-    grad_pred = 2 * (y_pred.T - current_y)
+    # grad_pred = 2 * (y_pred.T - current_y)
 
     # print(weights)
     # print("NEXT")
