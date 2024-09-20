@@ -33,10 +33,10 @@ y = scaler.fit_transform(df['Close'].values[1:].reshape(-1, 1)) # excludes first
 
 # define the size of the neural network
 input_nodes = 4
-hidden_nodes = 3
+hidden_nodes = 6
 output_nodes = 1
 batch_size = 1
-batches = 1
+batches = 1000
 num_hidden_layers = 1
 learning_rate = 1e-4
 
@@ -61,12 +61,10 @@ for epoch in range(batches):
     # pass through hidden layers and output
     y_pred = current_X
     pre_activations = []
-    hidden_values = []
     for layer in range(len(weights)):
         z = np.dot(y_pred, weights[layer]) + biases[layer]
         pre_activations.append(z)
         y_pred = ReLU(z)
-        hidden_values.append(y_pred)
     
     # set gradient prediction to derivative of loss function
     grad_pred = 2 * (y_pred - current_y)
@@ -75,20 +73,30 @@ for epoch in range(batches):
     grad_weights = []
     grad_biases = []
     for layer in reversed(range(len(weights))):
-        # do ReLU for hidden layers, not output
-        if layer < len(weights) - 1:
-            grad_pred = ReLU(grad_pred)
-        
         # update weight and bias gradient arrays
         grad_weights.append(np.dot(pre_activations[layer], grad_pred.T))
-        grad_biases.append(np.sum(grad_pred, axis=0, keepdims=True))
+        grad_biases.append(np.sum(grad_pred, axis=0))
 
-        # update grad_pred for hidden layers, not input
+        # update grad_pred for next layer because chain rule
         if layer != 0:
             grad_pred = np.dot(grad_pred.T, weights[layer].T)
         
     # update weights and biases with gradient descent
     for layer in range(len(weights)):
-        weights[layer] -= learning_rate * grad_weights[layer]
+        weights[layer] -= learning_rate * grad_weights[len(weights) - 1 - layer]
     for layer in range(len(biases)):
-        biases[layer] -= learning_rate * grad_biases[layer]
+        biases[layer] -= learning_rate * grad_biases[len(biases) - 1 - layer]
+
+test_preds = []
+X_test = X[20:30]
+y_test = y[20:30]
+for input in X_test:
+    y_pred = input
+    for layer in range(len(weights)):
+        z = np.dot(y_pred, weights[layer]) + biases[layer]
+        y_pred = ReLU(z)
+    test_preds.append(y_pred)
+
+mse_test = np.mean(MSE(test_preds, y_test))
+print("mean squared error:", mse_test)
+print(f"test data: {X[20][1]} result: {test_preds[0][0][0]}")
