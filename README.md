@@ -1,1 +1,1 @@
-Attempting to learn to make a Python neural network
+A scalable Python neural network to analyze stock data.
