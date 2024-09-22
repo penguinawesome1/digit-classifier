@@ -9,9 +9,6 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
-def ReLU(input):
-    return np.maximum(0, input)
-    
 def MSE(y_pred, y):
     return (y - y_pred) ** 2
     
@@ -64,7 +61,7 @@ for epoch in range(batches):
     for layer in range(len(weights)):
         z = np.dot(y_pred, weights[layer]) + biases[layer]
         pre_activations.append(z)
-        y_pred = ReLU(z)
+        y_pred = np.maximum(0, z)
     
     # set gradient prediction to derivative of loss function
     grad_pred = 2 * (y_pred - current_y)
